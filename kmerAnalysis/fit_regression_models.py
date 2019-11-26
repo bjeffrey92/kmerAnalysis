@@ -15,7 +15,8 @@ def summarise_kmer_data(kmer_dfs, y_dict):
     y_dict (dict): 
 
     Returns:
-    counts_array, y_array: two arrays of the counts of each kmer and y values in same order
+    counts_array, y_array, represnted_kmers: three arrays of the counts of each kmer and 
+    y values in same order and the kmers represented in the data
     '''
 
     max_kmers = len(kmer_dfs[list(kmer_dfs.keys())[0]]) #below code checks all are the same length
@@ -40,9 +41,10 @@ def summarise_kmer_data(kmer_dfs, y_dict):
             counts_array.append(counts)
             y_array.append(y_dict[name])
     
+    represented_kmers = np.array(represented_kmers)
     counts_array = np.array(counts_array)
     y_array = np.array(y_array)
-    return(counts_array, y_array)
+    return(counts_array, y_array, represented_kmers)
 
 
 def fit_lasso_model(x, y, alpha = 0.1, plot = True, test_size = 0.3):
