@@ -1,4 +1,12 @@
 from setuptools import setup
+from distutils.command.install import install as _install
+import subprocess
+
+class install(_install):
+    def run(self):
+        subprocess.call(['make', 'clean', '-C', 'src'])
+        subprocess.call(['make', '-C', 'src'])
+        _install.run(self)
 
 setup(name='kmerAnalysis',
       version='0.1',
@@ -12,5 +20,7 @@ setup(name='kmerAnalysis',
                         'numpy',
                         'bloom_filter',
                         'sklearn',
-                        'matplotlib']
+                        'matplotlib'],
+      package_data={'kmerAnalysis': ['combinekmerdata.so']},
+      cmdclass={'install': install}
 )

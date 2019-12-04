@@ -3,6 +3,7 @@ import itertools
 import math
 import random
 import os
+from ctypes import cdll
 from shutil import rmtree
 
 def make_kmer_df(fasta, k, binary = False):
@@ -40,28 +41,22 @@ def make_kmer_df(fasta, k, binary = False):
     kmrs_file = '{out_dir}/{name}.{k}.kmrs'.format(out_dir = out_dir,
                                                     name = name,
                                                     k = k)
-    kmer_data = pd.read_csv(kmrs_file, sep = '\t', header = None)
+
+    #load c functions
+    basedir = os.path.abspath(os.path.dirname(__file__))
+    libpath = os.path.join(basedir, 'combinekmerdata.so')
+    combinekmers = cdll.LoadLibrary(libpath)
+    
+    #strings have to be bytes to be passed to c 
+    kmrs_file_bytes = kmrs_file.encode('utf-8')
+    tmp_file = kmrs_file + '.out'
+    tmp_file_bytes = tmp_file.encode('utf-8')
+    k_bytes = str(k).encode('utf-8')
+    combinekmers.ck(kmrs_file_bytes, tmp_file_bytes, k_bytes)
+
+    kmer_df = pd.read_csv(tmp_file, sep = '\t', names = ['Kmer', 'Count'])
     rmtree(out_dir) #delete temp directory
 
-    #save results to pandas dataframe
-    bases = ['A','T','C','G']
-    all_kmers = []
-    counts = []
-    for i in itertools.product(bases, repeat=k):
-        kmer = list(i)
-        kmer = ''.join(kmer)
-        all_kmers.append(kmer)
-        if kmer in list(kmer_data[0]):
-            if binary:
-                count = 1
-            else:
-                count = list(kmer_data[kmer_data[0] == kmer][1])[0]
-        else:
-            count = 0
-        counts.append(count)
-    d = {'Kmer':all_kmers,'Count':counts}
-    kmer_df = pd.DataFrame(d)
-    
     return(kmer_df)
 
 
