@@ -12,7 +12,7 @@ def summarise_kmer_data(kmer_dfs, y_dict):
     Parameters:
     kmer_dfs (dict): dictionary of kmer dataframes in format defined by make_kmer_df(), 
     key is name of dataframe with corresponding key in y_dict
-    y_dict (dict): 
+    y_dict (dict): dictionary of y data as values and keys corresponding to those in kmer_dfs
 
     Returns:
     counts_array, y_array, represnted_kmers: three arrays of the counts of each kmer and 
@@ -40,10 +40,7 @@ def summarise_kmer_data(kmer_dfs, y_dict):
             counts = list(kmer_df.loc[kmer_df['Kmer'].isin(represented_kmers),]['Count'])
             counts_array.append(counts)
             y_array.append(y_dict[name])
-    
-    represented_kmers = np.array(represented_kmers)
-    counts_array = np.array(counts_array)
-    y_array = np.array(y_array)
+
     return(counts_array, y_array, represented_kmers)
 
 
