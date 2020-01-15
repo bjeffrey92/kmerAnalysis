@@ -6,12 +6,13 @@ import os
 from ctypes import cdll
 from shutil import rmtree
 
-def make_kmer_df(fasta, k, binary = False):
+def make_kmer_df(inputFile, k, fileFormat, binary = False):
     '''Takes a fasta as input and return dataframe of all kmers in the sequence
 
     Parameters:
-    fasta (str): Valid fasta file
+    inputFile (str): path to valid fasta, fastq, or multi-fasta file
     k (int): Length of kmers to be extracted
+    fileFormat (str): Format of input file must be fasta, fastq or multi-fasta
     binary (bool): If true output will only record whether each kmer is present rather than the number of times is appears
 
     Returns:
@@ -26,9 +27,20 @@ def make_kmer_df(fasta, k, binary = False):
     out_dir = out_dir[:-1] + str(counter)
     os.makedirs(out_dir)
 
+    if fileFormat == 'fasta':
+        formatFlag = '-fa'
+    elif fileFormat == 'fastq':
+        formatFlag = '-fq'
+    elif fileFormat == 'multi-fasta':
+        formatFlag = '-fm'
+    else:
+        raise ValueError('Unknown argument for fileFormat: {}'.format(fileFormat))
+
+    fasta = inputFile
     #uses subprocesses to run kmc tool for kmer counting
-    name = name = fasta.split('/')[-1]
-    shell_command = 'kmc -k{k} -fa -ci1  {fasta} {out_dir}/{name} {out_dir}'.format(k = str(k),
+    name = fasta.split('/')[-1]
+    shell_command = 'kmc -k{k} {f} -ci1  {fasta} {out_dir}/{name} {out_dir}'.format(k = str(k),
+                                                                                    f = formatFlag,
                                                                                     fasta = fasta,
                                                                                     name = name,
                                                                                     out_dir = out_dir)
@@ -41,7 +53,7 @@ def make_kmer_df(fasta, k, binary = False):
     kmrs_file = '{out_dir}/{name}.{k}.kmrs'.format(out_dir = out_dir,
                                                     name = name,
                                                     k = k)
-
+                                                    
     #load c functions
     basedir = os.path.abspath(os.path.dirname(__file__))
     libpath = os.path.join(basedir, 'combinekmerdata.so')
@@ -53,7 +65,7 @@ def make_kmer_df(fasta, k, binary = False):
     tmp_file_bytes = tmp_file.encode('utf-8')
     k_bytes = str(k).encode('utf-8')
     combinekmers.ck(kmrs_file_bytes, tmp_file_bytes, k_bytes)
-
+1
     kmer_df = pd.read_csv(tmp_file, sep = '\t', names = ['Kmer', 'Count'])
     rmtree(out_dir) #delete temp directory
 
